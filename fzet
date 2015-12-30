@@ -1,1 +1,69 @@
-/home/romgrk/local/bin/fzet
+#!/bin/zsh
+
+local args=$@
+local action=$1
+local target=$2
+
+local actions=(list keys schemas grep)
+
+local _fzf;
+_fzf="--ansi --color=16,hl:117,hl+:27"
+_fzf="$_fzf --bind='alt-o:execute(gsettings list-children {} | less)'"
+_fzf="$_fzf --bind='alt-p:execute(gsettings list-keys {} | less)'"
+
+function fzet_schemas () {
+    colorize="sed -r -e 's/(\w+).(\w+).(\w+)/\x1b[38;5;240m\1 \x1b[38;5;246m\2 \x1b[38;5;252m\3/'"
+    schemas=$(eval "gsettings list-schemas | $colorize")
+    colorize="sed -r -e 's/(\w+).(\w+).(\w+)/\x1b[38;5;240m\1 \x1b[38;5;246m\2 \x1b[03;38;5;229m\3/'"
+    relschemas=$(eval "gsettings list-relocatable-schemas | $colorize")
+    res=$(eval "echo '$schemas\n$relschemas' | fzf $_fzf --nth=3,2")
+    res=${res// /.}
+    echo $res
+}
+
+function fzet_keys () {
+    gsettings list-recursively |\
+    awk -e ' {
+        $1="\x1b[38;5;246m"$1;
+        $2="\x1b[38;5;202m"$2;
+        $3="\x1b[38;5;27m"$3;
+        print;
+    } ' | fzf --ansi --nth=2
+}
+
+function fzet_grep () {
+    gsettings list-recursively | grep $@
+}
+
+function fzet_list () {
+    if [[ -z $target ]]; then 
+        fzet_explore
+    else
+        fzet_grep $target
+    fi
+}
+
+function fzet_usage () {
+echo "
+`basename $args[0]` - gsettings viewing/editing through fzf (github.com/junegunn/fzf)
+
+Usage:
+`for a in $actions; print "\t$name $a"`
+"
+    
+}
+
+if [[ $action == "list" ]]; then
+    fzet_keys $target
+elif [[ $action == "keys" ]]; then
+    fzet_keys $target
+elif [[ $action == "schemas" ]]; then
+    fzet_schemas
+    #fzet_list $target
+elif [[ $action == "grep" ]]; then
+    fzet_grep $target
+else
+    fzet_usage
+fi
+
+
