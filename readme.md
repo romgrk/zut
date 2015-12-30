@@ -10,5 +10,5 @@ fzet schemas  # list schemas
 fzet list     # list both, pretty-mode
 ```
 
-<!--![alt text](./static/fzet.png "")-->
+![alt text](./static/fzet.png "")
 
